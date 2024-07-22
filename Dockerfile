@@ -224,3 +224,6 @@ RUN PUPPETEER_SKIP_DOWNLOAD=true yarn --production=true
 
 COPY scripts /app/scripts/
 COPY app.min.js entrypoint.sh /app/
+
+COPY examples /app/
+COPY examples /app/examples/

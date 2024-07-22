@@ -793,23 +793,42 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
             `Custom url handler script not found: "${customUrlHandlerPath}"`,
           )
         }
-        this.customUrlHandlerFn = (
-          await import(/* webpackIgnore: true */ customUrlHandlerPath)
-        ).default
+        if (
+          this.customUrlHandler.includes('.js') ||
+          this.customUrlHandler.includes('.mjs')
+        ) {
+          const test = await import(
+            /* webpackIgnore: true */ customUrlHandlerPath
+          )
+          if (!test.default) {
+            throw new Error(`Custom import is not set`)
+          }
+          this.customUrlHandlerFn = test.default
+        }
+        if (!this.customUrlHandlerFn) {
+          // throw new Error(
+          //   `Custom url handler function not set! ${this.id},${this.sessions},${tabIndex},${this.tabsPerSession},${index}`,
+          // )
+
+          const link_file_content = fs.readFileSync(
+            customUrlHandlerPath,
+            'utf-8',
+          )
+          const linksArray = link_file_content.split('\n')
+          url = linksArray[index] || ''
+        } else {
+          url = await this.customUrlHandlerFn({
+            id: this.id,
+            sessions: this.sessions,
+            tabIndex,
+            tabsPerSession: this.tabsPerSession,
+            index,
+            pid: process.pid,
+            env: { ...process.env } as Record<string, string>,
+            params: this.scriptParams,
+          })
+        }
       }
-      if (!this.customUrlHandlerFn) {
-        throw new Error(`Custom url handler function not set`)
-      }
-      url = await this.customUrlHandlerFn({
-        id: this.id,
-        sessions: this.sessions,
-        tabIndex,
-        tabsPerSession: this.tabsPerSession,
-        index,
-        pid: process.pid,
-        env: { ...process.env } as Record<string, string>,
-        params: this.scriptParams,
-      })
     }
 
     if (!url) {
