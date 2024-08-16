@@ -784,9 +784,20 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
 
     if (!url) {
       if (this.customUrlHandler && !this.customUrlHandlerFn) {
+        let customPath = ''
+        let customSkip = 0
+        const handlers = this.customUrlHandler.split(';')
+        if (handlers[1]) {
+          customPath = handlers[1]
+          customSkip = parseInt(handlers[0])
+        } else {
+          customPath = handlers[0]
+        }
+
         const customUrlHandlerPath = path.resolve(
           process.cwd(),
-          this.customUrlHandler,
+          //this.customUrlHandler,
+          customPath,
         )
         if (!fs.existsSync(customUrlHandlerPath)) {
           throw new Error(
@@ -794,8 +805,10 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
           )
         }
         if (
-          this.customUrlHandler.includes('.js') ||
-          this.customUrlHandler.includes('.mjs')
+          //this.customUrlHandler.includes('.js') ||
+          //this.customUrlHandler.includes('.mjs')
+          customPath.includes('.js') ||
+          customPath.includes('.mjs')
         ) {
           const test = await import(
             /* webpackIgnore: true */ customUrlHandlerPath
@@ -815,6 +828,7 @@ exec sg ${group} -c /tmp/webrtcperf-launcher-${mark}-browser`,
             'utf-8',
           )
           const linksArray = link_file_content.split('\n')
+          linksArray.splice(0, customSkip)
           url = linksArray[index] || ''
         } else {
           url = await this.customUrlHandlerFn({
